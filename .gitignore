@@ -18,3 +18,15 @@ yarn-error.log
 /.fleet
 /.idea
 /.vscode
+
+
+# compression
+*.zip
+*.rar
+*.7z
+*.tar.gz
+*.gz
+*.bz2
+*.xz
+*.tgz
+*.tar
