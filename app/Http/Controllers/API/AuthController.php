@@ -28,7 +28,7 @@ use App\Models\User;
  *     name="Authorization",
  *     description="Bearer token authentication"
  * )
- * @OA\Server(url="http://localhost:8000/api/v1", description="Development server")
+ * @OA\Server(url="https://ecommerce-backend.codingzonebd.com/api/v1", description="Development server")
  * @OA\Schema(
  *     schema="User",
  *     type="object",
