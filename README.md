@@ -16,10 +16,10 @@ This is a Laravel-based e-commerce backend project, featuring user roles such as
 
 ### Prerequisites
 
-- PHP >= 8.0
+- PHP >= 8.2
 - Composer
 - MySQL or MariaDB
-- Laravel >= 9.x
+- Laravel >= 11.x
 
 ### Installation
 
