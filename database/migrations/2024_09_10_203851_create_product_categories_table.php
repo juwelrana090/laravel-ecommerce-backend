@@ -20,7 +20,9 @@ class CreateProductCategoriesTable extends Migration
             $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
             $table->foreign('category_id')->references('id')->on('categories')->onDelete('cascade');
 
-            $table->primary(['product_id', 'category_id']); // Composite primary key
+            $table->primary(['product_id', 'category_id']);
+
+            $table->timestamps();
         });
     }
 
