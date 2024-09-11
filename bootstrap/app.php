@@ -4,6 +4,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use App\Http\Middleware\Authenticate;
+use App\Http\Middleware\JWTAuthenticate;
 use App\Http\Middleware\AdminMiddleware;
 use App\Http\Middleware\SellerMiddleware;
 use App\Http\Middleware\CheckSellerOrAdmin;
@@ -21,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'isAdmin' => AdminMiddleware::class,
             'isSeller' => SellerMiddleware::class,
             'seller_or_admin' => CheckSellerOrAdmin::class,
+            'JWTAuthenticate' => JWTAuthenticate::class,
         ]);
 
         // Define middleware groups

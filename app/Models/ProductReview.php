@@ -18,13 +18,13 @@ class ProductReview extends Model
         'rating',
     ];
 
-    // Each review belongs to a single product
+    // Define the relationship to the Product model
     public function product()
     {
         return $this->belongsTo(Product::class);
     }
 
-    // Each review belongs to a single user
+    // Define the relationship to the User model
     public function user()
     {
         return $this->belongsTo(User::class);

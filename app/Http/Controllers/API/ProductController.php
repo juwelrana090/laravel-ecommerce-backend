@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
 use App\Models\Product;
-use App\Models\ProductCategory;
+use App\Models\ProductReview;
 
 /**
  * @OA\Schema(
@@ -36,7 +36,6 @@ use App\Models\ProductCategory;
  */
 class ProductController extends Controller
 {
-
     /**
      * @OA\Get(
      *     path="/product",
@@ -433,7 +432,102 @@ class ProductController extends Controller
         }
     }
 
+    /**
+     * @OA\Post(
+     *     path="/product/{productId}/reviews",
+     *     summary="Create a new product review",
+     *     tags={"Product Reviews"},
+     *     @OA\Parameter(
+     *         name="productId",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="user_id", type="integer", example=1),
+     *             @OA\Property(property="comment", type="string", example="This is a review comment."),
+     *             @OA\Property(property="rating", type="integer", example=5)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Review created successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Review created successfully"),
+     *             @OA\Property(
+     *                 property="review",
+     *                 type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="product_id", type="integer", example=10),
+     *                 @OA\Property(property="user_id", type="integer", example=1),
+     *                 @OA\Property(property="comment", type="string", example="This is a review comment."),
+     *                 @OA\Property(property="rating", type="integer", example=5)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Invalid input",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="errors", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Product not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Product not found")
+     *         )
+     *     )
+     * )
+     */
+    public function storeReview(Request $request, $productId)
+    {
+        try {
+            // Validate the incoming request
+            $validator = Validator::make($request->all(), [
+                'user_id' => 'required|integer|exists:users,id',
+                'comment' => 'required|string',
+                'rating' => 'required|integer|between:1,5',
+            ]);
 
+            if ($validator->fails()) {
+                return response()->json(['errors' => $validator->errors()], 400);
+            }
+
+            // Find the product
+            $product = Product::find($productId);
+
+            if (!$product) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Product not found',
+                ], 404);
+            }
+
+            // Create the review
+            $review = ProductReview::create([
+                'product_id' => $productId,
+                'user_id' => $request->input('user_id'),
+                'comment' => $request->input('comment'),
+                'rating' => $request->input('rating'),
+            ]);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Review created successfully',
+                'review' => $review,
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'An error occurred: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
 
     /**
      * @OA\Delete(
