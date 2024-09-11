@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 
@@ -118,11 +119,14 @@ class CategoryController extends Controller
      *     )
      * )
      */
-    public function getProducts(Request $request, Category $category)
+    public function getProducts(Request $request, $slug)
     {
         try {
             // Fetch sort parameter
-            $sort = $request->query('sort', 'best_sell'); // Default to 'best_sell' if not provided
+            $sort = $request->query('sort', 'best_sell');
+
+            // Find the category by slug
+            $category = Category::where('slug', $slug)->first();
 
             // Ensure the category exists
             if (!$category) {
@@ -132,39 +136,60 @@ class CategoryController extends Controller
                 ], 404);
             }
 
-            // Get the products for the category
-            $query = $category->products();
+            // Use Eloquent to get products along with categories and product reviews
+            $query = Product::with(['categories', 'productReviews'])
+                ->whereHas('categories', function ($query) use ($category) {
+                    $query->where('categories.id', $category->id);
+                })
+                ->withAvg('productReviews', 'rating'); // Calculate the average rating
 
             // Apply sorting based on the 'sort' parameter
             switch ($sort) {
                 case 'best_sell':
-                    $query->orderBy('sales_count', 'desc'); // Assuming you have a 'sales_count' field
+                    $query->orderBy('sales_count', 'desc'); // Sort by best-selling
                     break;
 
                 case 'top_rated':
-                    $query->orderBy('rating', 'desc'); // Assuming you have a 'rating' field
+                    $query->orderBy('product_reviews_avg_rating', 'desc'); // Sort by top-rated (average rating)
                     break;
 
                 case 'price_high_to_low':
-                    $query->orderBy('price', 'desc');
+                    $query->orderBy('price', 'desc'); // Sort by price high to low
                     break;
 
                 case 'price_low_to_high':
-                    $query->orderBy('price', 'asc');
+                    $query->orderBy('price', 'asc'); // Sort by price low to high
                     break;
 
                 default:
-                    // Default sort (e.g., 'best_sell')
-                    $query->orderBy('sales_count', 'desc');
+                    $query->orderBy('id', 'desc'); // Default to product ID
                     break;
             }
 
+            // Get the products
             $products = $query->get();
+
+            // Format the response
+            $response = $products->map(function ($product) {
+                return [
+                    'name' => $product->name,
+                    'slug' => $product->slug,
+                    'price' => $product->price,
+                    'categories' => $product->categories->map(function ($category) {
+                        return [
+                            'id' => $category->id,
+                            'name' => $category->name,
+                            'slug' => $category->slug,
+                        ];
+                    }),
+                    'average_rating' => $product->product_reviews_avg_rating ?? 0,
+                ];
+            });
 
             return response()->json([
                 'status' => true,
                 'message' => 'Products retrieved successfully',
-                'data' => $products,
+                'data' => $response,
             ], 200);
         } catch (\Exception $e) {
             return response()->json([

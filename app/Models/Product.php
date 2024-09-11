@@ -13,6 +13,7 @@ class Product extends Model
         'name',
         'slug',
         'price',
+        'sales_count',
     ];
 
     // Many-to-Many relationship with Category via ProductCategory
@@ -24,6 +25,6 @@ class Product extends Model
     // One-to-Many relationship with ProductReview
     public function productReviews()
     {
-        return $this->hasMany(ProductReview::class);
+        return $this->hasMany(ProductReview::class, 'product_id');
     }
 }

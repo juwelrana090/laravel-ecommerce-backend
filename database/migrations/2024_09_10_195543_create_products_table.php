@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('slug')->unique();
             $table->decimal('price', 10, 2);
+            $table->unsignedInteger('sales_count')->default(0);
             $table->timestamps();
         });
     }

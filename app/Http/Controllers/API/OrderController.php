@@ -4,12 +4,12 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Str;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 use App\Models\Order;
-
+use App\Models\Product;
 
 /**
  * @OA\Schema(
@@ -277,13 +277,22 @@ class OrderController extends Controller
                 return response()->json(['errors' => $validator->errors()], 422);
             }
 
+            DB::beginTransaction(); // Start transaction
+
             $data = $request->only(['grand_total', 'shipping_cost', 'discount', 'user_id']);
             $order = Order::create($data);
 
-            // Attach order details
+            // Attach order details and update product sales_count
             foreach ($request->input('order_details') as $detail) {
+                // Create the order detail
                 $order->orderDetails()->create($detail);
+
+                // Update the sales_count for the product
+                $product = Product::find($detail['product_id']);
+                $product->increment('sales_count', $detail['quantity']);
             }
+
+            DB::commit(); // Commit transaction
 
             return response()->json([
                 'status' => true,
@@ -291,12 +300,15 @@ class OrderController extends Controller
                 'data' => $order,
             ], 201);
         } catch (\Exception $e) {
+            DB::rollBack(); // Rollback transaction on error
+
             return response()->json([
                 'status' => false,
                 'message' => 'An error occurred: ' . $e->getMessage(),
             ], 500);
         }
     }
+
 
     /**
      * @OA\Put(
