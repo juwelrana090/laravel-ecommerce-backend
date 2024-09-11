@@ -22,8 +22,8 @@ class ProductCategory extends Model
     }
 
     // This is a belongsTo relationship because ProductCategory belongs to one Product
-    public function product()
+    public function products()
     {
-        return $this->belongsTo(Product::class);
+        return $this->belongsToMany(Product::class, 'product_categories');
     }
 }

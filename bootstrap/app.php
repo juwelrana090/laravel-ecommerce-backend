@@ -6,6 +6,7 @@ use Illuminate\Foundation\Configuration\Middleware;
 use App\Http\Middleware\Authenticate;
 use App\Http\Middleware\AdminMiddleware;
 use App\Http\Middleware\SellerMiddleware;
+use App\Http\Middleware\CheckSellerOrAdmin;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -19,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'auth' => Authenticate::class,
             'isAdmin' => AdminMiddleware::class,
             'isSeller' => SellerMiddleware::class,
+            'seller_or_admin' => CheckSellerOrAdmin::class,
         ]);
 
         // Define middleware groups

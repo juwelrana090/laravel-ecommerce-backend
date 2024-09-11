@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Validator;
 
 
 use App\Models\Category;
+use App\Models\Product;
+use App\Models\ProductCategory;
 
 /**
  * @OA\Schema(
@@ -58,6 +60,111 @@ class CategoryController extends Controller
                 'status' => true,
                 'message' => 'Categories retrieved successfully',
                 'data' => $categories
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'An error occurred: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/category/{slug}/products",
+     *     summary="Get products by category with sorting options",
+     *     tags={"Category"},
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="slug",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="sort",
+     *         in="query",
+     *         required=false,
+     *         @OA\Schema(
+     *             type="string",
+     *             enum={"best_sell", "top_rated", "price_high_to_low", "price_low_to_high"},
+     *             example="best_sell"
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Products retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Products retrieved successfully"),
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/Product"))
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Category not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Category not found")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="An error occurred",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="An error occurred: ...")
+     *         )
+     *     )
+     * )
+     */
+    public function getProducts(Request $request, Category $category)
+    {
+        try {
+            // Fetch sort parameter
+            $sort = $request->query('sort', 'best_sell'); // Default to 'best_sell' if not provided
+
+            // Ensure the category exists
+            if (!$category) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Category not found',
+                ], 404);
+            }
+
+            // Get the products for the category
+            $query = $category->products();
+
+            // Apply sorting based on the 'sort' parameter
+            switch ($sort) {
+                case 'best_sell':
+                    $query->orderBy('sales_count', 'desc'); // Assuming you have a 'sales_count' field
+                    break;
+
+                case 'top_rated':
+                    $query->orderBy('rating', 'desc'); // Assuming you have a 'rating' field
+                    break;
+
+                case 'price_high_to_low':
+                    $query->orderBy('price', 'desc');
+                    break;
+
+                case 'price_low_to_high':
+                    $query->orderBy('price', 'asc');
+                    break;
+
+                default:
+                    // Default sort (e.g., 'best_sell')
+                    $query->orderBy('sales_count', 'desc');
+                    break;
+            }
+
+            $products = $query->get();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Products retrieved successfully',
+                'data' => $products,
             ], 200);
         } catch (\Exception $e) {
             return response()->json([

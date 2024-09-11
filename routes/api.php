@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Middleware\JWTAuthenticate;
 use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\API\CategoryController;
+use App\Http\Controllers\API\ProductController;
 
 Route::group(['prefix' => 'v1', 'middleware' => ['api']], function () {
 
@@ -17,13 +18,26 @@ Route::group(['prefix' => 'v1', 'middleware' => ['api']], function () {
     Route::prefix('category')->middleware(['api'])->group(function () {
         // Public routes
         Route::get('/', [CategoryController::class, 'index']);
-        Route::get('/{slug}/products', [CategoryController::class, 'products']);
+        Route::get('/{slug}/products', [CategoryController::class, 'getProducts']);
 
         // Admin routes
         Route::middleware([JWTAuthenticate::class, 'isAdmin'])->group(function () {
-            Route::post('/', [CategoryController::class, 'store']); // For creating a category
-            Route::put('/{category}', [CategoryController::class, 'update']); // For updating a category
-            Route::delete('/{category}', [CategoryController::class, 'destroy']); // For deleting a category
+            Route::post('/', [CategoryController::class, 'store']);
+            Route::put('/{category}', [CategoryController::class, 'update']);
+            Route::delete('/{category}', [CategoryController::class, 'destroy']);
+        });
+    });
+
+    Route::prefix('product')->middleware(['api'])->group(function () {
+        // Public routes
+        Route::get('/', [ProductController::class, 'index']);
+        Route::get('/{slug}', [ProductController::class, 'getProduct']);
+
+        // Admin and Seller routes
+        Route::middleware([JWTAuthenticate::class, 'seller_or_admin'])->group(function () {
+            Route::post('/', [ProductController::class, 'store']);
+            Route::put('/{slug}', [ProductController::class, 'update']);
+            Route::delete('/{slug}', [ProductController::class, 'destroy']);
         });
     });
 });
